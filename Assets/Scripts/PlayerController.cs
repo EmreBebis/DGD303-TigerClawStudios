@@ -3,14 +3,12 @@
 public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f; // Hareket hızı
+    public GameObject bulletPrefab; // Mermi prefab'ı
+    public Transform[] firePoints; // Birden fazla FirePoint
+    public float bulletSpeed = 10f; // Merminin hızı
+    public float bulletLifetime = 2f; // Merminin ömrü (saniye)
 
-    private Rigidbody2D rb;
     private Vector2 movement;
-
-    void Start()
-    {
-        rb = GetComponent<Rigidbody2D>();
-    }
 
     void Update()
     {
@@ -20,11 +18,38 @@ public class PlayerMovement : MonoBehaviour
 
         // Hareketi hesapla
         movement = new Vector2(horizontalInput, verticalInput).normalized * moveSpeed;
+
+        // Ateş etme kontrolü
+        if (Input.GetKeyDown(KeyCode.Space)) // Space tuşuna basıldığında
+        {
+            Fire();
+        }
     }
 
     void FixedUpdate()
     {
         // Hareketi uygula
-        rb.linearVelocity = movement;
+        transform.position += (Vector3)movement * Time.fixedDeltaTime;
+    }
+
+    void Fire()
+    {
+        if (bulletPrefab != null && firePoints.Length > 0)
+        {
+            foreach (Transform firePoint in firePoints)
+            {
+                if (firePoint != null)
+                {
+                    // Mermiyi oluştur
+                    GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
+
+                    // Mermiyi ileri doğru hareket ettir
+                    bullet.transform.Translate(firePoint.up * bulletSpeed * Time.deltaTime);
+
+                    // Mermiyi belirli bir süre sonra yok et
+                    Destroy(bullet, bulletLifetime);
+                }
+            }
+        }
     }
 }
