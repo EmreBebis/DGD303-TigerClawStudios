@@ -148,3 +148,5 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 5
+  explosionEffectPrefab: {fileID: 100002, guid: 75e9aa542fced034ea20a5158a0ee4b2, type: 3}
+  explosionEffectDuration: 3

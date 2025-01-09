@@ -1,12 +1,15 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
-    public GameObject enemyPrefab; // Düþman gemisi prefab'ý
-    public Vector2 spawnAreaMin; // Düþmanlarýn spawn olacaðý alanýn minimum koordinatý
-    public Vector2 spawnAreaMax; // Düþmanlarýn spawn olacaðý alanýn maksimum koordinatý
-    public float spawnInterval = 3f; // Düþmanlarýn spawn aralýðý (saniye baþýna)
-    public float enemyLifetime = 5f; // Düþmanlarýn sahnede kalacaðý süre (saniye)
+    public GameObject enemyPrefab; // DÃ¼ÅŸman gemisi prefab'Ä±
+    public Vector2 spawnAreaMin; // DÃ¼ÅŸmanlarÄ±n spawn olacaÄŸÄ± alanÄ±n minimum koordinatÄ±
+    public Vector2 spawnAreaMax; // DÃ¼ÅŸmanlarÄ±n spawn olacaÄŸÄ± alanÄ±n maksimum koordinatÄ±
+    public float spawnInterval = 3f; // DÃ¼ÅŸmanlarÄ±n spawn aralÄ±ÄŸÄ± (saniye baÅŸÄ±na)
+    public float enemyLifetime = 5f; // DÃ¼ÅŸmanlarÄ±n sahnede kalacaÄŸÄ± sÃ¼re (saniye)
+
+    public GameObject explosionEffectPrefab; // Patlama efekti prefab'Ä±
+    public GameObject muzzleflashEffectPrefab;
 
     private float timer = 0f;
 
@@ -17,7 +20,7 @@ public class GameManager : MonoBehaviour
         if (timer >= spawnInterval)
         {
             SpawnEnemy();
-            timer = 0f; // Zamanlayýcýyý sýfýrla
+            timer = 0f; // ZamanlayÄ±cÄ±yÄ± sÄ±fÄ±rla
         }
     }
 
@@ -26,12 +29,16 @@ public class GameManager : MonoBehaviour
         // Rastgele bir spawn pozisyonu belirle
         float spawnX = Random.Range(spawnAreaMin.x, spawnAreaMax.x);
         float spawnY = Random.Range(spawnAreaMin.y, spawnAreaMax.y);
-        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0); // 2D sahne için z ekseni 0
+        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0); // 2D sahne iÃ§in z ekseni 0
 
-        // Düþmaný spawn et
+        // DÃ¼ÅŸmanÄ± spawn et
         GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
 
-        // Düþmaný belirli bir süre sonra yok et
+        // DÃ¼ÅŸman yok edildiÄŸinde patlama efekti tetiklemek iÃ§in EnemyController ekle
+        EnemyController enemyController = enemy.AddComponent<EnemyController>();
+        enemyController.explosionEffectPrefab = explosionEffectPrefab;
+
+        // DÃ¼ÅŸmanÄ± belirli bir sÃ¼re sonra yok et
         Destroy(enemy, enemyLifetime);
     }
 }
