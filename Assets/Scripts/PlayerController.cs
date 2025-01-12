@@ -101,8 +101,10 @@ public class PlayerMovement : MonoBehaviour
         // Oyuncuyu yok et
         Destroy(gameObject);
 
+        FindObjectOfType<GameManager>().GameOver();
         // Oyunu durdur (isteğe bağlı)
         Debug.Log("Game Over!"); // Oyun bitti mesajı
         // Burada oyun bitiş ekranı veya yeniden başlatma mekanizması ekleyebilirsiniz.
+        
     }
 }

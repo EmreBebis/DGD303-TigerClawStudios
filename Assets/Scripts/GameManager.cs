@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement; // Sahne yönetimi için gerekli
 
 public class GameManager : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class GameManager : MonoBehaviour
     [Header("UI Menus")]
     public GameObject startMenu; // Başlangıç menüsü
     public GameObject pauseMenu; // Duraklatma menüsü
+    public GameObject creditsMenu; // Credits menüsü
+    public GameObject gameOverMenu; // Game Over menüsü
 
     private float timer = 0f;
     private bool isGamePaused = false;
@@ -24,6 +27,8 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 0f;
         startMenu.SetActive(true);
         pauseMenu.SetActive(false);
+        creditsMenu.SetActive(false);
+        gameOverMenu.SetActive(false);
         isGamePaused = false;
         isGameRunning = false;
     }
@@ -72,6 +77,8 @@ public class GameManager : MonoBehaviour
         // Oyunu başlat
         startMenu.SetActive(false);
         pauseMenu.SetActive(false);
+        creditsMenu.SetActive(false);
+        gameOverMenu.SetActive(false);
         Time.timeScale = 1f; // Oyunu devam ettir
         isGamePaused = false;
         isGameRunning = true;
@@ -88,21 +95,35 @@ public class GameManager : MonoBehaviour
         Time.timeScale = isGamePaused ? 0f : 1f; // Oyun duraklat veya devam ettir
     }
 
+    public void GameOver()
+    {
+        // Oyuncu gemisi yok olduğunda Game Over menüsünü göster
+        isGameRunning = false;
+        Time.timeScale = 0f;
+        gameOverMenu.SetActive(true);
+    }
+
     public void ReturnToMainMenu()
     {
-        // Ana menüye dön
-        pauseMenu.SetActive(false);
-        startMenu.SetActive(true);
-        Time.timeScale = 0f; // Oyunu duraklat
-
-        // Oyunu durdur
-        isGamePaused = false;
-        isGameRunning = false;
+        // Sahneyi yeniden yükle (oyunu sıfırla)
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void QuitGame()
     {
         Debug.Log("Oyun kapatılıyor.");
         Application.Quit();
+    }
+
+    public void ShowCredits()
+    {
+        // Credits menüsünü göster
+        creditsMenu.SetActive(true);
+    }
+
+    public void HideCredits()
+    {
+        // Credits menüsünü kapat
+        creditsMenu.SetActive(false);
     }
 }
