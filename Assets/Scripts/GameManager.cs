@@ -1,15 +1,27 @@
 ﻿using UnityEngine;
-using UnityEngine.SceneManagement; // Sahne yönetimi için gerekli
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    [Header("Player Health Settings")]
+    public int maxHealth = 3; // Oyuncunun maksimum canı
+    private int currentHealth;
+
+    public GameObject[] hearts; // Kalp UI elemanları (GameObject)
+
     [Header("Enemy Settings")]
     public GameObject enemyPrefab; // Düşman gemisi prefab'ı
     public Vector2 spawnAreaMin; // Düşmanların spawn olacağı alanın minimum koordinatı
     public Vector2 spawnAreaMax; // Düşmanların spawn olacağı alanın maksimum koordinatı
     public float spawnInterval = 3f; // Düşmanların spawn aralığı (saniye başına)
     public float enemyLifetime = 5f; // Düşmanların sahnede kalacağı süre (saniye)
-    public GameObject explosionEffectPrefab; // Patlama efekti prefab'ı
+
+    [Header("Asteroid Settings")]
+    public GameObject asteroidPrefab; // Asteroid prefab'ı
+    public Vector2 asteroidSpawnAreaMin; // Asteroidlerin spawn olacağı alanın minimum koordinatı
+    public Vector2 asteroidSpawnAreaMax; // Asteroidlerin spawn olacağı alanın maksimum koordinatı
+    public float asteroidSpawnInterval = 5f; // Asteroid spawn aralığı (saniye)
+    public float asteroidLifetime = 10f; // Asteroidlerin sahnede kalacağı süre (saniye)
 
     [Header("UI Menus")]
     public GameObject startMenu; // Başlangıç menüsü
@@ -17,94 +29,129 @@ public class GameManager : MonoBehaviour
     public GameObject creditsMenu; // Credits menüsü
     public GameObject gameOverMenu; // Game Over menüsü
 
-    private float timer = 0f;
+    private float enemyTimer = 0f;
+    private float asteroidTimer = 0f;
     private bool isGamePaused = false;
     private bool isGameRunning = false;
 
     void Start()
     {
-        // Oyun başlarken başlangıç menüsünü göster, oyunu duraklat
-        Time.timeScale = 0f;
+        currentHealth = maxHealth; // Oyunu başlatmadan önce canı maksimuma ayarla
+
+        // Kalpleri başlangıçta gizle
+        HideHearts();
+
+        Time.timeScale = 0f; // Oyunu durdur
         startMenu.SetActive(true);
         pauseMenu.SetActive(false);
         creditsMenu.SetActive(false);
         gameOverMenu.SetActive(false);
-        isGamePaused = false;
-        isGameRunning = false;
     }
 
     void Update()
     {
-        // Oyun duraklatılmışsa veya başlamamışsa spawn işlemini durdur
-        if (isGamePaused || !isGameRunning || Time.timeScale == 0f)
-            return;
+        if (isGamePaused || !isGameRunning || Time.timeScale == 0f) return;
 
-        // Düşmanları belirli aralıklarla spawn et
-        timer += Time.deltaTime;
-        if (timer >= spawnInterval)
+        // Düşman gemileri spawn et
+        enemyTimer += Time.deltaTime;
+        if (enemyTimer >= spawnInterval)
         {
             SpawnEnemy();
-            timer = 0f; // Zamanlayıcıyı sıfırla
+            enemyTimer = 0f;
         }
 
-        // Pause menüsünü aç/kapat
-        if (Input.GetKeyDown(KeyCode.Escape))
+        // Asteroidler spawn et
+        asteroidTimer += Time.deltaTime;
+        if (asteroidTimer >= asteroidSpawnInterval)
         {
-            TogglePauseMenu();
+            SpawnAsteroid();
+            asteroidTimer = 0f;
         }
+
+        if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu();
     }
 
     void SpawnEnemy()
     {
-        // Rastgele bir spawn pozisyonu belirle
         float spawnX = Random.Range(spawnAreaMin.x, spawnAreaMax.x);
         float spawnY = Random.Range(spawnAreaMin.y, spawnAreaMax.y);
-        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0); // 2D sahne için z ekseni 0
+        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0);
 
-        // Düşmanı spawn et
         GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
-
-        // Düşman yok edildiğinde patlama efekti tetiklemek için EnemyController ekle
-        EnemyController enemyController = enemy.AddComponent<EnemyController>();
-        enemyController.explosionEffectPrefab = explosionEffectPrefab;
-
-        // Düşmanı belirli bir süre sonra yok et
         Destroy(enemy, enemyLifetime);
+    }
+
+    void SpawnAsteroid()
+    {
+        float spawnX = Random.Range(asteroidSpawnAreaMin.x, asteroidSpawnAreaMax.x);
+        float spawnY = Random.Range(asteroidSpawnAreaMin.y, asteroidSpawnAreaMax.y);
+        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0);
+
+        GameObject asteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
+        Destroy(asteroid, asteroidLifetime);
+    }
+
+    public void TakeDamage(int damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth < 0) currentHealth = 0;
+
+        UpdateHearts();
+
+        if (currentHealth <= 0) GameOver();
+    }
+
+    private void UpdateHearts()
+    {
+        for (int i = 0; i < hearts.Length; i++)
+        {
+            hearts[i].SetActive(i < currentHealth);
+        }
+    }
+
+    private void HideHearts()
+    {
+        foreach (GameObject heart in hearts)
+        {
+            heart.SetActive(false);
+        }
     }
 
     public void StartGame()
     {
-        // Oyunu başlat
         startMenu.SetActive(false);
-        pauseMenu.SetActive(false);
-        creditsMenu.SetActive(false);
-        gameOverMenu.SetActive(false);
-        Time.timeScale = 1f; // Oyunu devam ettir
-        isGamePaused = false;
+        Time.timeScale = 1f;
         isGameRunning = true;
-
-        // Zamanlayıcıyı sıfırla
-        timer = 0f;
+        currentHealth = maxHealth;
+        UpdateHearts();
     }
 
     public void TogglePauseMenu()
     {
-        // Pause menüsünü aç/kapat
         isGamePaused = !isGamePaused;
         pauseMenu.SetActive(isGamePaused);
-        Time.timeScale = isGamePaused ? 0f : 1f; // Oyun duraklat veya devam ettir
+        Time.timeScale = isGamePaused ? 0f : 1f;
     }
 
     public void GameOver()
     {
-        // Oyuncu gemisi yok olduğunda Game Over menüsünü göster
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) Destroy(player); // Oyuncu gemisini sahneden kaldır
+
         isGameRunning = false;
         Time.timeScale = 0f;
+
+        // Kalpleri gizle
+        HideHearts();
+
         gameOverMenu.SetActive(true);
     }
 
     public void ReturnToMainMenu()
     {
+        // Kalpleri gizle
+        HideHearts();
+
         // Sahneyi yeniden yükle (oyunu sıfırla)
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
@@ -117,13 +164,13 @@ public class GameManager : MonoBehaviour
 
     public void ShowCredits()
     {
-        // Credits menüsünü göster
         creditsMenu.SetActive(true);
     }
 
     public void HideCredits()
     {
-        // Credits menüsünü kapat
         creditsMenu.SetActive(false);
     }
 }
+
+

@@ -4,27 +4,43 @@ public class PlayerMovement : MonoBehaviour
 {
     public float moveSpeed = 5f; // Hareket hızı
     public GameObject bulletPrefab; // Mermi prefab'ı
-    public Transform[] firePoints; // Birden fazla FirePoint
+    public Transform[] firePoints; // Birden fazla ateş noktası
     public float bulletSpeed = 10f; // Merminin hızı
     public float bulletLifetime = 2f; // Merminin ömrü (saniye)
 
-    public int playerHealth = 3; // Oyuncunun toplam canı
     public GameObject explosionEffectPrefab; // Patlama efekti prefab'ı
-    public GameObject muzzleFlashEffectPrefab; // Muzzle flash efekti prefab'ı
+    public GameObject muzzleFlashEffectPrefab; // Ateşleme efekti prefab'ı
 
-    private Vector2 movement;
+    private Vector2 movement; // Hareket girdisini tutacak
+    private Vector2 screenBounds; // Ekran sınırları
+    private float objectWidth; // Geminin genişliği
+    private float objectHeight; // Geminin yüksekliği
+
+    void Start()
+    {
+        // Ekran sınırlarını hesapla
+        screenBounds = Camera.main.ScreenToWorldPoint(new Vector3(Screen.width, Screen.height, Camera.main.transform.position.z));
+
+        // Geminin boyutlarını hesapla
+        SpriteRenderer sr = GetComponent<SpriteRenderer>();
+        if (sr != null)
+        {
+            objectWidth = sr.bounds.size.x / 2; // Genişliğin yarısı
+            objectHeight = sr.bounds.size.y / 2; // Yüksekliğin yarısı
+        }
+    }
 
     void Update()
     {
         // Klavye girişlerini al
-        float horizontalInput = Input.GetAxisRaw("Horizontal"); // A/D veya Sol/Sağ okları
-        float verticalInput = Input.GetAxisRaw("Vertical"); // W/S veya Yukarı/Aşağı okları
+        float horizontalInput = Input.GetAxisRaw("Horizontal");
+        float verticalInput = Input.GetAxisRaw("Vertical");
 
-        // Hareketi hesapla
+        // Hareket girdisini hesapla
         movement = new Vector2(horizontalInput, verticalInput).normalized * moveSpeed;
 
         // Ateş etme kontrolü
-        if (Input.GetKeyDown(KeyCode.Space)) // Space tuşuna basıldığında
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             Fire();
         }
@@ -33,7 +49,14 @@ public class PlayerMovement : MonoBehaviour
     void FixedUpdate()
     {
         // Hareketi uygula
-        transform.position += (Vector3)movement * Time.fixedDeltaTime;
+        Vector3 newPosition = transform.position + (Vector3)movement * Time.fixedDeltaTime;
+
+        // Sınırlar içinde pozisyonu kısıtla
+        newPosition.x = Mathf.Clamp(newPosition.x, -screenBounds.x + objectWidth, screenBounds.x - objectWidth);
+        newPosition.y = Mathf.Clamp(newPosition.y, -screenBounds.y + objectHeight, screenBounds.y - objectHeight);
+
+        // Gemiyi yeni pozisyona taşı
+        transform.position = newPosition;
     }
 
     void Fire()
@@ -47,13 +70,17 @@ public class PlayerMovement : MonoBehaviour
                     // Mermiyi oluştur
                     GameObject bullet = Instantiate(bulletPrefab, firePoint.position, firePoint.rotation);
 
-                    // Mermiyi ileri doğru hareket ettir
-                    bullet.transform.Translate(firePoint.up * bulletSpeed * Time.deltaTime);
+                    // Mermiyi hareket ettir
+                    Rigidbody2D rb = bullet.GetComponent<Rigidbody2D>();
+                    if (rb != null)
+                    {
+                        rb.linearVelocity = firePoint.up * bulletSpeed;
+                    }
 
                     // Mermiyi belirli bir süre sonra yok et
                     Destroy(bullet, bulletLifetime);
 
-                    // Muzzle flash efekti
+                    // Ateşleme efekti oluştur
                     CreateMuzzleFlash(firePoint.position, firePoint.up);
                 }
             }
@@ -65,46 +92,38 @@ public class PlayerMovement : MonoBehaviour
         // Eğer çarpışan obje "Enemy" tag'ine sahipse
         if (collision.CompareTag("Enemy"))
         {
-            // Can azalt
-            playerHealth--;
+            HandleCollision(collision);
+        }
+        // Eğer çarpışan obje "Asteroid" tag'ine sahipse
+        else if (collision.CompareTag("Asteroid"))
+        {
+            HandleCollision(collision);
+        }
+    }
 
-            // Eğer can 0 veya altına inerse
-            if (playerHealth <= 0)
-            {
-                GameOver();
-            }
+    private void HandleCollision(Collider2D collision)
+    {
+        GameManager gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.TakeDamage(1);
+        }
 
-            // Düşmanı yok et
-            Destroy(collision.gameObject);
+        Destroy(collision.gameObject);
 
-            // Patlama efekti oluştur
-            if (explosionEffectPrefab != null)
-            {
-                Instantiate(explosionEffectPrefab, collision.transform.position, Quaternion.identity);
-            }
+        if (explosionEffectPrefab != null)
+        {
+            Instantiate(explosionEffectPrefab, collision.transform.position, Quaternion.identity);
         }
     }
 
     void CreateMuzzleFlash(Vector2 position, Vector2 direction)
     {
-        // Muzzle flash oluşturma efekti (kısa süreli ışık efekti)
         if (muzzleFlashEffectPrefab != null)
         {
             GameObject muzzleFlash = Instantiate(muzzleFlashEffectPrefab, position, Quaternion.identity);
-            muzzleFlash.transform.up = direction; // Muzzle flash'ın ateş edilen yönle uyumlu olması
-            Destroy(muzzleFlash, 0.1f); // Muzzle flash kısa süre sonra yok olacak
+            muzzleFlash.transform.up = direction;
+            Destroy(muzzleFlash, 0.1f);
         }
-    }
-
-    void GameOver()
-    {
-        // Oyuncuyu yok et
-        Destroy(gameObject);
-
-        FindObjectOfType<GameManager>().GameOver();
-        // Oyunu durdur (isteğe bağlı)
-        Debug.Log("Game Over!"); // Oyun bitti mesajı
-        // Burada oyun bitiş ekranı veya yeniden başlatma mekanizması ekleyebilirsiniz.
-        
     }
 }
