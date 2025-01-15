@@ -7,6 +7,7 @@ public class EnemyController : MonoBehaviour
     public float explosionEffectDuration = 3f; // Patlama efektinin sahnede kalacağı süre
 
     private bool isDestroyed = false; // Tekrarlayan patlama efektlerini önlemek için kontrol
+    private bool isOffScreen = false; // Düşmanın ekran dışına çıkıp çıkmadığını kontrol eder
 
     void Update()
     {
@@ -14,15 +15,20 @@ public class EnemyController : MonoBehaviour
         transform.Translate(Vector3.down * speed * Time.deltaTime);
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
-        // Eğer patlama efekti prefab'ı tanımlıysa ve henüz yok edilmediyse
+        // Eğer düşman ekran dışına çıktığı için yok ediliyorsa patlama efekti veya sesi tetikleme
+        if (isOffScreen)
+        {
+            return;
+        }
+
+        // Patlama efekti oluştur
         if (!isDestroyed && explosionEffectPrefab != null)
         {
-            // Mevcut pozisyonda patlama efekti oluştur
             GameObject explosion = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
 
-            // Patlama efektini belirli bir süre sonra yok etmek
+            // Patlama efektini belirli bir süre sonra yok et
             Destroy(explosion, explosionEffectDuration);
 
             // Tekrar patlama oluşmasını engelle
@@ -32,7 +38,8 @@ public class EnemyController : MonoBehaviour
 
     private void OnBecameInvisible()
     {
-        // Eğer düşman ekran dışında görünmez hale geldiyse, yok et
+        // Düşman ekran dışına çıktığında sessizce yok et
+        isOffScreen = true;
         Destroy(gameObject);
     }
 }

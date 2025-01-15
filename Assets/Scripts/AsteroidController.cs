@@ -9,6 +9,7 @@ public class AsteroidController : MonoBehaviour
     public float explosionEffectDuration = 3f; // Patlama efektinin sahnede kalma süresi
 
     private float rotationSpeed; // Rastgele dönüş hızı
+    private bool isOffScreen = false; // Asteroid ekran dışına çıktı mı kontrolü
 
     void Start()
     {
@@ -25,12 +26,17 @@ public class AsteroidController : MonoBehaviour
         transform.Rotate(Vector3.forward * rotationSpeed * Time.deltaTime);
     }
 
-    void OnDestroy()
+    private void OnDestroy()
     {
-        // Eğer patlama efekti prefab'ı tanımlıysa
+        // Eğer asteroid ekran dışına çıktığı için yok ediliyorsa patlama efekti veya sesi tetikleme
+        if (isOffScreen)
+        {
+            return;
+        }
+
+        // Patlama efekti oluştur
         if (explosionEffectPrefab != null)
         {
-            // Mevcut pozisyonda patlama efekti oluştur
             GameObject explosion = Instantiate(explosionEffectPrefab, transform.position, Quaternion.identity);
 
             // Patlama efektini belirli bir süre sonra yok et
@@ -40,7 +46,8 @@ public class AsteroidController : MonoBehaviour
 
     private void OnBecameInvisible()
     {
-        // Asteroid ekran dışına çıktıysa yok et
+        // Asteroid ekran dışına çıktığında sessizce yok et
+        isOffScreen = true;
         Destroy(gameObject);
     }
 }

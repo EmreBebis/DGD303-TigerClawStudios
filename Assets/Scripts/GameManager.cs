@@ -3,6 +3,13 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    AudioManager audiomanager;
+
+    private void Awake()
+    {
+        audiomanager = GameObject.FindGameObjectWithTag("Audio").GetComponent<AudioManager>();
+    }
+
     [Header("Player Health Settings")]
     public int maxHealth = 3; // Oyuncunun maksimum canı
     private int currentHealth;
@@ -37,6 +44,9 @@ public class GameManager : MonoBehaviour
     void Start()
     {
         currentHealth = maxHealth; // Oyunu başlatmadan önce canı maksimuma ayarla
+
+        // Menü müziğini başlat
+        audiomanager.PlayMusic(audiomanager.background);
 
         // Kalpleri başlangıçta gizle
         HideHearts();
@@ -93,6 +103,7 @@ public class GameManager : MonoBehaviour
 
     public void TakeDamage(int damage)
     {
+        audiomanager.PlaySFX(audiomanager.takeDamage);
         currentHealth -= damage;
         if (currentHealth < 0) currentHealth = 0;
 
@@ -119,6 +130,9 @@ public class GameManager : MonoBehaviour
 
     public void StartGame()
     {
+        // Menü müziğini durdur ve oyun müziğini başlat
+        audiomanager.PlayMusic(audiomanager.playing);
+
         startMenu.SetActive(false);
         Time.timeScale = 1f;
         isGameRunning = true;
@@ -135,6 +149,7 @@ public class GameManager : MonoBehaviour
 
     public void GameOver()
     {
+        audiomanager.PlaySFX(audiomanager.oyuncuExplode);
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player != null) Destroy(player); // Oyuncu gemisini sahneden kaldır
 
@@ -149,6 +164,9 @@ public class GameManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        // Menü müziğini başlat
+        audiomanager.PlayMusic(audiomanager.background);
+
         // Kalpleri gizle
         HideHearts();
 
@@ -172,5 +190,3 @@ public class GameManager : MonoBehaviour
         creditsMenu.SetActive(false);
     }
 }
-
-

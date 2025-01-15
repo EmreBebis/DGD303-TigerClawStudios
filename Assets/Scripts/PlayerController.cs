@@ -2,6 +2,13 @@
 
 public class PlayerMovement : MonoBehaviour
 {
+    AudioManager audiomanager;
+
+    private void Awake()
+    {
+        audiomanager = GameObject.FindGameObjectWithTag("Audio").GetComponent<AudioManager>();
+    }
+
     public float moveSpeed = 5f; // Hareket hızı
     public GameObject bulletPrefab; // Mermi prefab'ı
     public Transform[] firePoints; // Birden fazla ateş noktası
@@ -61,6 +68,7 @@ public class PlayerMovement : MonoBehaviour
 
     void Fire()
     {
+        audiomanager.PlaySFX(audiomanager.playershoot);
         if (bulletPrefab != null && firePoints.Length > 0)
         {
             foreach (Transform firePoint in firePoints)
