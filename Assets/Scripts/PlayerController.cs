@@ -107,6 +107,11 @@ public class PlayerMovement : MonoBehaviour
         {
             HandleCollision(collision);
         }
+        // Eğer çarpışan obje "Pizza" tag'ine sahipse
+        else if (collision.CompareTag("Pizza"))
+        {
+            CollectPizza(collision);
+        }
     }
 
     private void HandleCollision(Collider2D collision)
@@ -123,6 +128,18 @@ public class PlayerMovement : MonoBehaviour
         {
             Instantiate(explosionEffectPrefab, collision.transform.position, Quaternion.identity);
         }
+    }
+
+    private void CollectPizza(Collider2D collision)
+    {
+        GameManager gameManager = FindObjectOfType<GameManager>();
+        if (gameManager != null)
+        {
+            gameManager.CollectPizza(); // Pizzayı topla
+        }
+
+        Destroy(collision.gameObject); // Pizzayı yok et
+        audiomanager.PlaySFX(audiomanager.takePizzas); // Pizza toplama sesini çal
     }
 
     void CreateMuzzleFlash(Vector2 position, Vector2 direction)

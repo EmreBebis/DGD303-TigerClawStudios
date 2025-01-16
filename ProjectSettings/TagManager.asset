@@ -8,6 +8,7 @@ TagManager:
   - Enemy
   - Asteroid
   - Audio
+  - Pizza
   layers:
   - Default
   - TransparentFX

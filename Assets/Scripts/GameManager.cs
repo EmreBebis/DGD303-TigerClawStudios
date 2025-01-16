@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 public class GameManager : MonoBehaviour
 {
@@ -11,58 +12,87 @@ public class GameManager : MonoBehaviour
     }
 
     [Header("Player Health Settings")]
-    public int maxHealth = 3; // Oyuncunun maksimum canı
+    public int maxHealth = 3;
     private int currentHealth;
 
-    public GameObject[] hearts; // Kalp UI elemanları (GameObject)
+    public GameObject[] hearts;
 
     [Header("Enemy Settings")]
-    public GameObject enemyPrefab; // Düşman gemisi prefab'ı
-    public Vector2 spawnAreaMin; // Düşmanların spawn olacağı alanın minimum koordinatı
-    public Vector2 spawnAreaMax; // Düşmanların spawn olacağı alanın maksimum koordinatı
-    public float spawnInterval = 3f; // Düşmanların spawn aralığı (saniye başına)
-    public float enemyLifetime = 5f; // Düşmanların sahnede kalacağı süre (saniye)
+    public GameObject enemyPrefab;
+    public Vector2 spawnAreaMin;
+    public Vector2 spawnAreaMax;
+    public float spawnInterval = 3f;
+    public float enemyLifetime = 5f;
 
     [Header("Asteroid Settings")]
-    public GameObject asteroidPrefab; // Asteroid prefab'ı
-    public Vector2 asteroidSpawnAreaMin; // Asteroidlerin spawn olacağı alanın minimum koordinatı
-    public Vector2 asteroidSpawnAreaMax; // Asteroidlerin spawn olacağı alanın maksimum koordinatı
-    public float asteroidSpawnInterval = 5f; // Asteroid spawn aralığı (saniye)
-    public float asteroidLifetime = 10f; // Asteroidlerin sahnede kalacağı süre (saniye)
+    public GameObject asteroidPrefab;
+    public Vector2 asteroidSpawnAreaMin;
+    public Vector2 asteroidSpawnAreaMax;
+    public float asteroidSpawnInterval = 5f;
+    public float asteroidLifetime = 10f;
 
-    [Header("UI Menus")]
-    public GameObject startMenu; // Başlangıç menüsü
-    public GameObject pauseMenu; // Duraklatma menüsü
-    public GameObject creditsMenu; // Credits menüsü
-    public GameObject gameOverMenu; // Game Over menüsü
+    [Header("Pizza Settings")]
+    public GameObject pizzaPrefab;
+    public Vector2 pizzaSpawnAreaMin;
+    public Vector2 pizzaSpawnAreaMax;
+    public float pizzaSpawnInterval = 3f;
+    public int maxPizzaCount = 20;
+    public int pizzasToWin = 15;
+    public float gameDuration = 60f;
+
+    [Header("UI Elements")]
+    public GameObject startMenu;
+    public GameObject pauseMenu;
+    public GameObject creditsMenu;
+    public GameObject gameOverMenu;
+    public GameObject winMenu;
+    public TMP_Text timerText;
+    public TMP_Text pizzaCountText;
 
     private float enemyTimer = 0f;
     private float asteroidTimer = 0f;
+    private float pizzaTimer = 0f;
+    private float gameTimer;
+    private int currentPizzaCount = 0;
+    private int collectedPizzas = 0;
     private bool isGamePaused = false;
     private bool isGameRunning = false;
 
     void Start()
     {
-        currentHealth = maxHealth; // Oyunu başlatmadan önce canı maksimuma ayarla
+        currentHealth = maxHealth;
+        gameTimer = gameDuration;
 
-        // Menü müziğini başlat
+        pizzaCountText.text = "Pizzas: 0 / " + pizzasToWin;
+        timerText.text = "Time: " + gameDuration.ToString("F0");
+        HideGameUI();
+
+        winMenu.SetActive(false);
+        gameOverMenu.SetActive(false);
+
         audiomanager.PlayMusic(audiomanager.background);
 
-        // Kalpleri başlangıçta gizle
         HideHearts();
 
-        Time.timeScale = 0f; // Oyunu durdur
+        Time.timeScale = 0f;
         startMenu.SetActive(true);
         pauseMenu.SetActive(false);
         creditsMenu.SetActive(false);
-        gameOverMenu.SetActive(false);
     }
 
     void Update()
     {
         if (isGamePaused || !isGameRunning || Time.timeScale == 0f) return;
 
-        // Düşman gemileri spawn et
+        gameTimer -= Time.deltaTime;
+        timerText.text = "Time: " + Mathf.Max(0, gameTimer).ToString("F0");
+
+        if (gameTimer <= 0)
+        {
+            EndGame(false);
+            return;
+        }
+
         enemyTimer += Time.deltaTime;
         if (enemyTimer >= spawnInterval)
         {
@@ -70,7 +100,6 @@ public class GameManager : MonoBehaviour
             enemyTimer = 0f;
         }
 
-        // Asteroidler spawn et
         asteroidTimer += Time.deltaTime;
         if (asteroidTimer >= asteroidSpawnInterval)
         {
@@ -78,7 +107,17 @@ public class GameManager : MonoBehaviour
             asteroidTimer = 0f;
         }
 
-        if (Input.GetKeyDown(KeyCode.Escape)) TogglePauseMenu();
+        pizzaTimer += Time.deltaTime;
+        if (pizzaTimer >= pizzaSpawnInterval && currentPizzaCount < maxPizzaCount)
+        {
+            SpawnPizza();
+            pizzaTimer = 0f;
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            TogglePauseMenu();
+        }
     }
 
     void SpawnEnemy()
@@ -99,6 +138,28 @@ public class GameManager : MonoBehaviour
 
         GameObject asteroid = Instantiate(asteroidPrefab, spawnPosition, Quaternion.identity);
         Destroy(asteroid, asteroidLifetime);
+    }
+
+    void SpawnPizza()
+    {
+        float spawnX = Random.Range(pizzaSpawnAreaMin.x, pizzaSpawnAreaMax.x);
+        float spawnY = Random.Range(pizzaSpawnAreaMin.y, pizzaSpawnAreaMax.y);
+        Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0);
+
+        Instantiate(pizzaPrefab, spawnPosition, Quaternion.identity);
+        currentPizzaCount++;
+    }
+
+    public void CollectPizza()
+    {
+        collectedPizzas++;
+        currentPizzaCount--;
+        pizzaCountText.text = "Pizzas: " + collectedPizzas + " / " + pizzasToWin;
+
+        if (collectedPizzas >= pizzasToWin)
+        {
+            EndGame(true);
+        }
     }
 
     public void TakeDamage(int damage)
@@ -128,12 +189,46 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void HideGameUI()
+    {
+        timerText.gameObject.SetActive(false);
+        pizzaCountText.gameObject.SetActive(false);
+    }
+
+    private void ShowGameUI()
+    {
+        timerText.gameObject.SetActive(true);
+        pizzaCountText.gameObject.SetActive(true);
+    }
+
+    void EndGame(bool hasWon)
+    {
+        isGameRunning = false;
+
+        // Tüm objeleri sahneden kaldır
+        DestroyAllGameObjectsWithTag("Player");
+        DestroyAllGameObjectsWithTag("Enemy");
+        DestroyAllGameObjectsWithTag("Asteroid");
+        DestroyAllGameObjectsWithTag("Pizza");
+
+        if (hasWon)
+        {
+            winMenu.SetActive(true);
+        }
+        else
+        {
+            gameOverMenu.SetActive(true);
+        }
+
+        Time.timeScale = 0f;
+    }
+
     public void StartGame()
     {
-        // Menü müziğini durdur ve oyun müziğini başlat
         audiomanager.PlayMusic(audiomanager.playing);
 
         startMenu.SetActive(false);
+        ShowGameUI();
         Time.timeScale = 1f;
         isGameRunning = true;
         currentHealth = maxHealth;
@@ -150,33 +245,21 @@ public class GameManager : MonoBehaviour
     public void GameOver()
     {
         audiomanager.PlaySFX(audiomanager.oyuncuExplode);
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) Destroy(player); // Oyuncu gemisini sahneden kaldır
-
-        isGameRunning = false;
-        Time.timeScale = 0f;
-
-        // Kalpleri gizle
-        HideHearts();
-
-        gameOverMenu.SetActive(true);
+        EndGame(false);
     }
 
     public void ReturnToMainMenu()
     {
-        // Menü müziğini başlat
         audiomanager.PlayMusic(audiomanager.background);
 
-        // Kalpleri gizle
         HideHearts();
+        HideGameUI();
 
-        // Sahneyi yeniden yükle (oyunu sıfırla)
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void QuitGame()
     {
-        Debug.Log("Oyun kapatılıyor.");
         Application.Quit();
     }
 
@@ -188,5 +271,14 @@ public class GameManager : MonoBehaviour
     public void HideCredits()
     {
         creditsMenu.SetActive(false);
+    }
+
+    private void DestroyAllGameObjectsWithTag(string tag)
+    {
+        GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
+        foreach (GameObject obj in objects)
+        {
+            Destroy(obj);
+        }
     }
 }
