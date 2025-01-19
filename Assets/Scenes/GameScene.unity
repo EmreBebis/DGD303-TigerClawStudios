@@ -2213,7 +2213,8 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_text: "Eser Efe \u015Een - 215040087\nHasan Emre Bebi\u015F - 215040048\n\nKopernik
-    Pizza - Galatic Delivery"
+    Pizza - Galatic Delivery\n-2D Space Kit Assets\n-OpenGameArt Sound Effetcs\n-ChatGPT
+    (Openai) \n-Microsoft C# Documentation"
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -4423,9 +4424,10 @@ MonoBehaviour:
   - {fileID: 24012653}
   - {fileID: 2128120021}
   enemyPrefab: {fileID: 5821642975700599920, guid: 5fc687e5824158642a864b4d6829283c, type: 3}
+  enemy2Prefab: {fileID: 8311841758618892013, guid: 2d23e04639e2f714a8f3778add6fca35, type: 3}
   spawnAreaMin: {x: -8, y: 6}
   spawnAreaMax: {x: 8, y: 6}
-  spawnInterval: 1
+  spawnInterval: 0.5
   enemyLifetime: 6
   asteroidPrefab: {fileID: 2157212296615012830, guid: ead86bb1d6f7698458b55632e3c9f762, type: 3}
   asteroidSpawnAreaMin: {x: -4, y: 6}

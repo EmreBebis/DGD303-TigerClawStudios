@@ -9,10 +9,16 @@ public class EnemyController : MonoBehaviour
     private bool isDestroyed = false; // Tekrarlayan patlama efektlerini önlemek için kontrol
     private bool isOffScreen = false; // Düşmanın ekran dışına çıkıp çıkmadığını kontrol eder
 
+    void Start()
+    {
+        // Geminin yönünü aşağıya çevirmek
+        transform.rotation = Quaternion.Euler(0, 0, 180);
+    }
+
     void Update()
     {
         // Düşmanı aşağı doğru hareket ettir
-        transform.Translate(Vector3.down * speed * Time.deltaTime);
+        transform.Translate(Vector3.down * speed * Time.deltaTime, Space.World);
     }
 
     private void OnDestroy()

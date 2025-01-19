@@ -18,7 +18,8 @@ public class GameManager : MonoBehaviour
     public GameObject[] hearts;
 
     [Header("Enemy Settings")]
-    public GameObject enemyPrefab;
+    public GameObject enemyPrefab; // İlk düşman gemisi prefab'ı
+    public GameObject enemy2Prefab; // Yeni düşman gemisi prefab'ı
     public Vector2 spawnAreaMin;
     public Vector2 spawnAreaMax;
     public float spawnInterval = 3f;
@@ -126,7 +127,10 @@ public class GameManager : MonoBehaviour
         float spawnY = Random.Range(spawnAreaMin.y, spawnAreaMax.y);
         Vector3 spawnPosition = new Vector3(spawnX, spawnY, 0);
 
-        GameObject enemy = Instantiate(enemyPrefab, spawnPosition, Quaternion.identity);
+        // Rastgele bir düşman türü seç
+        GameObject enemyToSpawn = Random.value > 0.5f ? enemyPrefab : enemy2Prefab;
+
+        GameObject enemy = Instantiate(enemyToSpawn, spawnPosition, Quaternion.identity);
         Destroy(enemy, enemyLifetime);
     }
 
@@ -205,11 +209,8 @@ public class GameManager : MonoBehaviour
     {
         isGameRunning = false;
 
-        // Tüm objeleri sahneden kaldır
-        DestroyAllGameObjectsWithTag("Player");
-        DestroyAllGameObjectsWithTag("Enemy");
-        DestroyAllGameObjectsWithTag("Asteroid");
-        DestroyAllGameObjectsWithTag("Pizza");
+        // Oyuncuyu ve sahnedeki tüm objeleri yok et
+        ClearSceneObjects();
 
         if (hasWon)
         {
@@ -221,6 +222,27 @@ public class GameManager : MonoBehaviour
         }
 
         Time.timeScale = 0f;
+    }
+
+    private void ClearSceneObjects()
+    {
+        // Oyuncuyu yok et
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null) Destroy(player);
+
+        // Sahnedeki düşmanları, asteroitleri ve pizzaları yok et
+        foreach (GameObject enemy in GameObject.FindGameObjectsWithTag("Enemy"))
+        {
+            Destroy(enemy);
+        }
+        foreach (GameObject asteroid in GameObject.FindGameObjectsWithTag("Asteroid"))
+        {
+            Destroy(asteroid);
+        }
+        foreach (GameObject pizza in GameObject.FindGameObjectsWithTag("Pizza"))
+        {
+            Destroy(pizza);
+        }
     }
 
     public void StartGame()
@@ -271,14 +293,5 @@ public class GameManager : MonoBehaviour
     public void HideCredits()
     {
         creditsMenu.SetActive(false);
-    }
-
-    private void DestroyAllGameObjectsWithTag(string tag)
-    {
-        GameObject[] objects = GameObject.FindGameObjectsWithTag(tag);
-        foreach (GameObject obj in objects)
-        {
-            Destroy(obj);
-        }
     }
 }
