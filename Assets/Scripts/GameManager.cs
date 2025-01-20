@@ -45,6 +45,7 @@ public class GameManager : MonoBehaviour
     public GameObject startMenu;
     public GameObject pauseMenu;
     public GameObject creditsMenu;
+    public GameObject howtoplayMenu;
     public GameObject gameOverMenu;
     public GameObject winMenu;
     public TMP_Text timerText;
@@ -293,5 +294,13 @@ public class GameManager : MonoBehaviour
     public void HideCredits()
     {
         creditsMenu.SetActive(false);
+    }
+    public void ShowhowtoplayMenu()
+    {
+        howtoplayMenu.SetActive(true);
+    }
+    public void HidehowtoplayMenu()
+    {
+        howtoplayMenu.SetActive(false);
     }
 }
